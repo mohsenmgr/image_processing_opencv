@@ -1,0 +1,66 @@
+import cv2
+import numpy as np
+from matplotlib import pyplot as plt
+import math
+import random
+
+
+
+im = cv2.imread('../images/NO/190828_132418_0000547436_CAM2_NG_NO.bmp', cv2.IMREAD_GRAYSCALE)
+im_orig = cv2.imread('../images/NO/190828_132418_0000547436_CAM2_NG_NO.bmp')
+
+# choosing 300 x points randomly to feed the algorithm
+x_locations = []
+for i in range(300):
+    number = random.randint(0,im_R.shape[1]) 
+    if number not in x_locations :
+        x_locations.append(i)
+       
+
+points = []
+# traversing the image with chosen points, and checking pixel value against threshold = 100
+for i in x_locations:
+    for j in range(im_R.shape[0]):
+        pixel_value = im_R[j,i]
+        if pixel_value > 100:
+            points.append([j,i,pixel_value])
+            break;
+    
+
+theSum = 0
+for i in range(len(points)):
+    theSum = theSum + points[i][2]
+    
+# determining average pixel value for chosen points
+average = theSum / len(pixel_values)
+ceil = math.ceil(average)
+floor = math.floor(average)
+
+#choosing the final points which are in range of average pixel value found before 
+f_result = []
+for i in range(len(points)):
+    if  floor-1 < points[i][2] < ceil+1:
+        point_Y = points[i][0]
+        f_result.append(point_Y)
+
+# A function to determine which y position is the most popular among final points y positions        
+def most_frequent(List): 
+    counter = 0
+    num = List[0] 
+      
+    for i in List: 
+        curr_frequency = List.count(i) 
+        if(curr_frequency> counter): 
+            counter = curr_frequency 
+            num = i 
+  
+    return num 
+  
+# final y position is the estimation of y by the algorithm
+found_y_position = most_frequent(f_result)
+
+
+lineThickness = 6
+cv2.line(im_orig, (0, found_y_position), (1599, found_y_position), (0,0,255), lineThickness)
+plt.imshow(im_orig,cmap = 'gray')
+
