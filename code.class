@@ -13,7 +13,7 @@ im_orig = cv2.imread('../images/NO/190828_132418_0000547436_CAM2_NG_NO.bmp')
 print(im.shape)
 
 class Wire:   
-            img = np.ones([1200,1600])
+            img = np.zeros([1200,1600], dtype="uint8")
             x_locations = []
             top = -1
             bottom = -1
