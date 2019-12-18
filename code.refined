@@ -9,58 +9,68 @@ import random
 im = cv2.imread('../images/NO/190828_132418_0000547436_CAM2_NG_NO.bmp', cv2.IMREAD_GRAYSCALE)
 im_orig = cv2.imread('../images/NO/190828_132418_0000547436_CAM2_NG_NO.bmp')
 
-# choosing 300 x points randomly to feed the algorithm
-x_locations = []
-for i in range(300):
-    number = random.randint(0,im_R.shape[1]) 
-    if number not in x_locations :
-        x_locations.append(i)
+def wire_frame(img,arg):
+    # choosing 300 x points randomly to feed the algorithm
+    x_locations = []
+    for i in range(300):
+        number = random.randint(0,img.shape[1]) 
+        if number not in x_locations :
+            x_locations.append(i)
        
-
-points = []
-# traversing the image with chosen points, and checking pixel value against threshold = 100
-for i in x_locations:
-    for j in range(im_R.shape[0]):
-        pixel_value = im_R[j,i]
-        if pixel_value > 100:
-            points.append([j,i,pixel_value])
-            break;
+    points = []
     
+    # traversing the image with chosen points, and checking pixel value against threshold = 100
+    # based on arg, start from 0:top or 1:bottom of the image 
+    if (arg == 0):
+        for i in x_locations:
+            for j in range(img.shape[0]):
+                pixel_value = img[j,i]
+                if pixel_value > 100:
+                    points.append([j,i,pixel_value])
+                    break;
+    else:
+        for i in x_locations:
+            for j in  reversed(range(img.shape[0])):
+                pixel_value = img[j,i]
+                if pixel_value > 100:
+                    points.append([j,i,pixel_value])
+                    break;
 
-theSum = 0
-for i in range(len(points)):
-    theSum = theSum + points[i][2]
-    
-# determining average pixel value for chosen points
-average = theSum / len(pixel_values)
-ceil = math.ceil(average)
-floor = math.floor(average)
+    theSum = 0
+    for i in range(len(points)):
+        theSum = theSum + points[i][2]
 
-#choosing the final points which are in range of average pixel value found before 
-f_result = []
-for i in range(len(points)):
-    if  floor-1 < points[i][2] < ceil+1:
-        point_Y = points[i][0]
-        f_result.append(point_Y)
+    # determining average pixel value for chosen points
+    average = theSum / len(points)
+    ceil = math.ceil(average)
+    floor = math.floor(average)
 
-# A function to determine which y position is the most popular among final points y positions        
-def most_frequent(List): 
-    counter = 0
-    num = List[0] 
-      
-    for i in List: 
-        curr_frequency = List.count(i) 
-        if(curr_frequency> counter): 
-            counter = curr_frequency 
-            num = i 
+    #choosing the final points which are in range of average pixel value found before 
+    f_result = []
+    for i in range(len(points)):
+        if  floor-1 < points[i][2] < ceil+1:
+            point_Y = points[i][0]
+            f_result.append(point_Y)
+
+    # A function to determine which y position is the most popular among final points y positions        
+    def most_frequent(List): 
+        counter = 0
+        num = List[0] 
+
+        for i in List: 
+            curr_frequency = List.count(i) 
+            if(curr_frequency> counter): 
+                counter = curr_frequency 
+                num = i 
+
+        return num 
   
-    return num 
-  
-# final y position is the estimation of y by the algorithm
-found_y_position = most_frequent(f_result)
-
+    # final y position is the estimation of y by the algorithm
+    found_y_position = most_frequent(f_result)
+    return found_y_position
 
 lineThickness = 6
-cv2.line(im_orig, (0, found_y_position), (1599, found_y_position), (0,0,255), lineThickness)
+position = wire_frame(im,1)
+cv2.line(im_orig, (0, position), (1599, position), (0,0,255), lineThickness)
 plt.imshow(im_orig,cmap = 'gray')
 
