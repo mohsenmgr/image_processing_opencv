@@ -14,21 +14,27 @@ print(im.shape)
 
 class Wire:   
             img = np.zeros([1200,1600], dtype="uint8")
+            resized = np.zeros([600,800], dtype="uint8")
             x_locations = []
             top = -1
             bottom = -1
             def __init__(self, img):
                 self.img = img  
-                # choosing 300 x points randomly to feed the algorithm
-                for i in range(300):
+                # choosing 10 x points randomly to feed the algorithm
+                j = 0
+                for i in range(img.shape[1]):
+                    j = j+1
+                    if j == 10:
+                        break
                     r = random.SystemRandom()
                     number = r.randint(0,img.shape[1]) 
                     if number not in self.x_locations :
                         self.x_locations.append(i)
-                self.top = self.wire_frame(0)
-                self.bottom = self.wire_frame(1)
-    
-             # A function to determine which y position is the most popular among final points y positions        
+                self.resize_pic()        
+                self.top = self.wire_frame(0) 
+                self.bottom = self.wire_frame(1) 
+        
+            # A function to determine which y position is the most popular among final points y positions        
             def most_frequent(self,List): 
                 counter = 0
                 num = List[0] 
@@ -37,49 +43,71 @@ class Wire:
                     if(curr_frequency> counter): 
                         counter = curr_frequency 
                         num = i 
-
                 return num 
-    
-    
+            
+
+            def find_mean(self,x):
+                mysum = 0
+                points_y = []
+                
+                # we devide picture to 3 zones
+                size = math.floor(self.resized.shape[0]/3)
+                start = 0
+                end = size
+                for i in range(2):
+                    for j in range(10):
+                        r = random.SystemRandom()
+                        number = r.randint(start,end) 
+                        if number not in points_y:
+                            points_y.append(number)
+                    start = start + size
+                    end = end + size
+                
+                for j in range(len(points_y)):
+                    y = points_y[j]
+                    pixel_value = self.resized[y,x]
+                    mysum = mysum + pixel_value
+                
+                mean = np.mean(mysum/len(points_y))
+                return mean
+            
+            def resize_pic(self):
+                scale_percent = 50 # percent of original size
+                width = int(self.img.shape[1] * scale_percent / 100)
+                height = int(self.img.shape[0] * scale_percent / 100)
+                dim = (width, height)
+                resized = cv2.resize(self.img, dim, interpolation = cv2.INTER_AREA)
+                self.resized = resized
+                
+            
             def wire_frame(self,arg):
-                    points = []
-                    # traversing the image with chosen points, and checking pixel value against threshold = 100
+                    y_values = []
+                    # traversing the image with chosen x points, and checking pixel value against
+                    #threshold = mean_value
                     # based on arg, start from 0:top or 1:bottom of the image 
                     if (arg == 0):
-                        for i in self.x_locations:
-                            for j in range(self.img.shape[0]):
-                                pixel_value = self.img[j,i]
-                                if pixel_value > 100:
-                                    points.append([j,i,pixel_value])
+                         for i in self.x_locations:
+                            mean_value = self.find_mean(i)
+                            for j in range(self.resized.shape[0]):
+                                pixel_value = self.resized[j,i]
+                                if pixel_value > mean_value: 
+                                    y_values.append(j)
                                     break;
+                    
                     else:
                         for i in self.x_locations:
-                            for j in  reversed(range(self.img.shape[0])):
-                                pixel_value = self.img[j,i]
-                                if pixel_value > 100:
-                                    points.append([j,i,pixel_value])
+                            mean_value = self.find_mean(i)
+                            for j in  reversed(range(self.resized.shape[0])):
+                                pixel_value = self.resized[j,i]
+                                if pixel_value > mean_value:
+                                    y_values.append(j)
                                     break;
 
-                    theSum = 0
-                    for i in range(len(points)):
-                        theSum = theSum + points[i][2]
-
-                    # determining average pixel value for chosen points
-                    average = theSum / len(points)
-                    ceil = math.ceil(average)
-                    floor = math.floor(average)
-
-                    #choosing the final points which are in range of average pixel value found before 
-                    f_result = []
-                    for i in range(len(points)):
-                        if  floor-1 < points[i][2] < ceil+1:
-                            point_Y = points[i][0]
-                            f_result.append(point_Y)
-
-                   
-
                     # final y position is the estimation of y by the algorithm
-                    found_y_position = self.most_frequent(f_result)
+                    # * 2 because we scaled down the image before
+                    found_y_position = self.most_frequent(y_values)
+                    # * 2 because we scaled down the image before
+                    found_y_position = found_y_position * 2
                     return found_y_position
     
 
